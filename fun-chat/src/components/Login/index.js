@@ -1,10 +1,12 @@
 import React from 'react'
 import { Row, Col, Button, Typography } from 'antd';
 
-import { auth } from '../../firebase/config';
+import { auth, db } from '../../firebase/config';
 import { FacebookAuthProvider, signInWithPopup } from 'firebase/auth';
 
 import { useNavigate } from 'react-router-dom';
+import { addDoc, collection } from 'firebase/firestore';
+import { addDocument } from '../../firebase/services';
 
 const { Title } = Typography;
 
@@ -12,16 +14,24 @@ const fbProvider = new FacebookAuthProvider();
 
 export default function Login() {
 
-    const handleFbLogin = () => {
-        signInWithPopup(auth, fbProvider)
-            .then((result) => {
-                // console.log('Đăng nhập thành công:', result.user);
-                console.log('Đăng nhập thành công');
-            })
-            .catch((error) => {
-                console.error('Lỗi đăng nhập:', error);
-            });
-    }
+    const handleFbLogin = async () => {
+        try {
+            const result = await signInWithPopup(auth, fbProvider);
+            // console.log('Đăng nhập thành công:', result.user);
+
+            if (result._tokenResponse.isNewUser) {
+                await addDocument('users', {
+                    displayName: result.user.displayName,
+                    email: result.user.email,
+                    photoURL: result.user.photoURL,
+                    uid: result.user.uid,
+                    providerId: result.user.providerData[0].providerId,
+                });
+            }
+        } catch (error) {
+            console.error('Lỗi đăng nhập:', error);
+        }
+    };
 
 
     return (
