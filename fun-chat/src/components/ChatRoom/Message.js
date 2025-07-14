@@ -1,6 +1,7 @@
 import { Avatar, Typography } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
+import { formatRelative } from 'date-fns';
 
 const WrapperStyled = styled.div`
   margin-bottom: 10px;
@@ -21,17 +22,34 @@ const WrapperStyled = styled.div`
   }
 `;
 
-export default function Message({ text, displayName, createdAt, photoUrl }) {
-    return (
-        <WrapperStyled>
-            <div>
-                <Avatar size='small' src={photoUrl}>A</Avatar>
-                <Typography.Text>{displayName}</Typography.Text>
-                <Typography.Text>{createdAt}</Typography.Text>
-            </div>
-            <div>
-                <Typography.Text>{text}</Typography.Text>
-            </div>
-        </WrapperStyled>
-    );
+function formatDate(seconds) {
+  let formattedDate = '';
+
+  if (seconds) {
+    formattedDate = formatRelative(new Date(seconds * 1000), new Date());
+
+    formattedDate =
+      formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+  }
+
+  return formattedDate;
+}
+
+export default function Message({ text, displayName, createdAt, photoURL }) {
+  return (
+    <WrapperStyled>
+      <div>
+        <Avatar size='small' src={photoURL}>
+          {photoURL ? '' : displayName?.charAt(0)?.toUpperCase()}
+        </Avatar>
+        <Typography.Text className='author'>{displayName}</Typography.Text>
+        <Typography.Text className='date'>
+          {formatDate(createdAt?.seconds)}
+        </Typography.Text>
+      </div>
+      <div>
+        <Typography.Text className='content'>{text}</Typography.Text>
+      </div>
+    </WrapperStyled>
+  );
 };

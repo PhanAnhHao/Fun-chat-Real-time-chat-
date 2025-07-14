@@ -6,7 +6,7 @@ import { FacebookAuthProvider, signInWithPopup } from 'firebase/auth';
 
 import { useNavigate } from 'react-router-dom';
 import { addDoc, collection } from 'firebase/firestore';
-import { addDocument } from '../../firebase/services';
+import { addDocument, generateKeywords } from '../../firebase/services';
 
 const { Title } = Typography;
 
@@ -26,6 +26,7 @@ export default function Login() {
                     photoURL: result.user.photoURL,
                     uid: result.user.uid,
                     providerId: result.user.providerData[0].providerId,
+                    keywords: generateKeywords(result.user.displayName)
                 });
             }
         } catch (error) {

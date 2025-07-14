@@ -1,68 +1,65 @@
 import { useEffect, useState } from 'react';
 import {
-    collection as firestoreCollection,
-    query,
-    where,
-    orderBy,
-    onSnapshot,
+    collection as firestoreCollection, // Tạo tham chiếu đến collection
+    query,  // Hàm tạo query Firestore
+    where,  // Hàm tạo điều kiện lọc
+    orderBy, // Hàm sắp xếp
+    onSnapshot // Hàm đăng ký listener realtime
 } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import { db } from '../../firebase/config'; // Kết nối Firestore từ config của bạn
 
+// Custom hook: lắng nghe realtime Firestore
 const useFirestore = (collectionName, condition) => {
-    // Tạo state để lưu documents realtime từ Firestore
+    // State lưu documents realtime
     const [documents, setDocuments] = useState([]);
 
     useEffect(() => {
-        // Tạo reference tới collection cần nghe
+        // B1: Tạo reference đến collection
         const collectionRef = firestoreCollection(db, collectionName);
 
-        // Mặc định: query tất cả document, sắp xếp theo 'createdAt'
-        let q = query(collectionRef, orderBy('createdAt'));
+        // B2: Khai báo query ban đầu = chỉ collectionRef (chưa có điều kiện)
+        let q = collectionRef;
 
         if (condition) {
-            // Lấy ra các trường từ condition (fieldName, operator, compareValue)
+            // 👉 Nếu có điều kiện lọc thì lấy các tham số ra
             const { fieldName, operator, compareValue } = condition;
 
-            // Kiểm tra compareValue có rỗng không
-            // - Nếu null/undefined thì ko cần query
-            // - Nếu là array nhưng rỗng thì cũng không query
+            // B3: Kiểm tra điều kiện có hợp lệ không
             const isCompareValueEmpty =
                 compareValue == null ||
                 (Array.isArray(compareValue) && compareValue.length === 0);
 
             if (!fieldName || !operator || isCompareValueEmpty) {
-                // Nếu điều kiện thiếu hoặc compareValue không hợp lệ
-                // 👉 Clear documents, không lắng nghe Firestore
-                setDocuments([]);
-                return;
+                // ❌ Nếu điều kiện không đủ, không lắng nghe Firestore
+                setDocuments([]); // clear data
+                return; // thoát useEffect
             }
 
-            // Nếu condition hợp lệ:
-            // 👉 Tạo query với where + orderBy cùng lúc
-            q = query(
-                collectionRef,
-                where(fieldName, operator, compareValue),
-                orderBy('createdAt')
-            );
+            // ✅ Nếu hợp lệ: Tạo query với where
+            q = query(collectionRef, where(fieldName, operator, compareValue));
+            // ⚠️ KHÔNG orderBy nếu dùng where('in', ...) để tránh lỗi index không có
+        } else {
+            // ✅ Nếu không có điều kiện lọc → query toàn bộ, sắp xếp createdAt
+            q = query(collectionRef, orderBy('createdAt'));
         }
 
-        // Đăng ký listener realtime với onSnapshot
+        // B4: Đăng ký listener realtime với onSnapshot
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            // snapshot chứa tất cả documents hiện có
+            // snapshot.docs = mảng document Firestore
             const docs = snapshot.docs.map((doc) => ({
-                ...doc.data(), // lấy data document
-                id: doc.id,    // thêm id để dễ dùng
+                ...doc.data(), // Lấy tất cả field
+                id: doc.id,    // Thêm id Firestore
             }));
 
-            // Cập nhật state documents
+            // B5: Cập nhật state
             setDocuments(docs);
         });
 
-        // Clean function: hủy listener khi component unmount hoặc deps đổi
+        // B6: Clean function: huỷ listener khi unmount hoặc deps thay đổi
         return () => unsubscribe();
-    }, [collectionName, condition]); // chạy lại khi collectionName hoặc condition đổi
+    }, [collectionName, condition]); // 🚩 useEffect chạy lại khi collectionName hoặc condition đổi
 
-    // Trả về danh sách documents realtime
+    // ✅ Trả documents ra ngoài để component sử dụng
     return documents;
 };
 
