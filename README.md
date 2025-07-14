@@ -1,4 +1,18 @@
-If first time installation or clone, install all packages first: npm i --save-exact
-Then,
-To run app:  => cd fun-chat => npm start
-To run firebase - emulators: cd fun-chat => cd emulators => npm run emulators
+## 🚀 Setup & Run
+
+**If first time installation or clone, install all packages first:**  
+`npm i --save-exact`  
+
+---
+
+**Then, to run the app:**  
+➡️ `cd fun-chat` *(if it is not in the `fun-chat` folder)*  
+➡️ `npm start`  
+
+---
+
+**To run Firebase emulators:**  
+➡️ `cd fun-chat` *(if it is not in the `fun-chat` folder)*  
+➡️ `cd emulators`  
+➡️ `npm run emulators`
+
